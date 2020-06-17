@@ -15,11 +15,7 @@ import java.util.ResourceBundle;
 
 public class SceneController implements Initializable {
 
-
-
-
     String host = "86.1.51.222";
-
     DatagramSocket socket = new DatagramSocket();
     GuiMessageReceiver receiver = new GuiMessageReceiver(socket);
     GuiMessageSender guiMessageSender = new GuiMessageSender(socket, host);
@@ -27,8 +23,7 @@ public class SceneController implements Initializable {
     static boolean checkBoxChecked = false;
     static String userName = "";
     static String messageToSend = "";
-
-    private static Label myDisplay;
+    protected static Label myDisplay;
     protected static Button mySend;
     private static Button myExit;
     private static TextField myMessage;
@@ -38,8 +33,7 @@ public class SceneController implements Initializable {
     protected static Circle mySign;
     protected static CheckBox myCheckBox;
     protected static Rectangle myMyState;
-
-
+    protected static boolean currentState = false;
 
     @FXML
     private Label display;
@@ -52,9 +46,6 @@ public class SceneController implements Initializable {
 
     @FXML
     private CheckBox checkBox;
-
-
-
 
 
     @FXML
@@ -76,13 +67,14 @@ public class SceneController implements Initializable {
         myExit = exit;
         myPartnerState = partnerState;
         myMyState = myState;
-
-
         mySign = sign;
 
 
-
         new Thread(receiver).start();
+
+
+
+
         try {
             checkServerState();
         } catch (InterruptedException | SocketException e) {
@@ -91,83 +83,68 @@ public class SceneController implements Initializable {
     }
     public void startReceiver(){
         new Thread(receiver).start();
-
     }
 
     public void sendMessage() throws InterruptedException {
-
-        System.out.println("Send button pressed 1");
-        //setMessage();
-        System.out.println("Send button pressed 2");
         Thread.sleep(100);
-        System.out.println("Send button pressed 3");
         guiMessageSender.send();
-        System.out.println("Send button pressed 4");
-        // clearMessageTextField();
+    }
 
-
+    public void sendTriggerMessage() throws Exception {
+        guiMessageSender.sendTrigger();
+    }
+    public void sendStateForTrigger(){
+        guiMessageSender.sendState(SceneController.currentState);
+    }
+    public void sendTime (String time) throws Exception {
+        guiMessageSender.sendTotalTime(time);
     }
 
     public void checkServerState() throws InterruptedException, SocketException {
 
-        Trigger trigger = new Trigger();
-        PingListener pingListener = new PingListener();
+       Trigger trigger = new Trigger();
+        //PingListener pingListener = new PingListener();
         MeasureTime measureTime = new MeasureTime();
+        Terminator terminator = new Terminator();
         new Thread(trigger).start();
-        new Thread(pingListener).start();
+        //new Thread(pingListener).start();
         new Thread(measureTime).start();
 
-
-
-        //new Thread(receiver).start();
         messageToSend = "Server is Live";
         guiMessageSender.send2();
-        Thread.sleep(500);
-        System.out.println("Ez a hossza: " + (GuiMessageReceiver.finalString).length());
-
+        Thread.sleep(1000);
 
         if (!((GuiMessageReceiver.finalString).length() > 0)) {
-            //setConnectButtonDisabled();
             myDisplay.setText("Server is offline.");
+            setLabelOffline();
+            new Thread(terminator).start();
+
 
         } else {
             mySign.setFill(Color.GREEN);
-            //myConnect.setDisable(false);
         }
-
-
     }
-
-    /*public static void getUserName() {
-        userName = (myName.getText()).toUpperCase();
-    }*/
 
     public void connect() throws SocketException {
-        //getUserName();
-        //if (userName.length() > 0) {
-        //myMessage.setDisable(false);
-        //mySend.setDisable(false);
-
-        //setConnectButtonDisabled();
-
-
         new Thread(receiver).start();
-
-
-        System.out.println("In first connect");
-
-
-        //getUserName();
-
         guiMessageSender.userConnect();
-        //}
+
     }
 
+    public static void setLabelOffline(){
+        myDisplay.setText("");
+        myDisplay.setText("Server is offline." + "\n" + "Shutdown in 50 seconds.");
 
+    }
+
+    public static void loading(){
+        myDisplay.setText("Loading... Please wait.");
+    }
 
     public static void setDisplayServerOffline() throws InterruptedException {
-        myDisplay.setText("");
-        myDisplay.setText("Server is offline.");
+
+
+
         Terminator terminator = new Terminator();
         new Thread(terminator).start();
         //Thread.sleep(2000);
@@ -212,26 +189,25 @@ public class SceneController implements Initializable {
         }
         if(checkBoxChecked){
             myMyState.setFill(Color.GREEN);
+            currentState = true;
+            Main.loadTime();
+            LoadFile.timeAtLoad = 0;
             guiMessageSender.sendState(true);
         }else{
             myMyState.setFill(Color.RED);
+            currentState = false;
             guiMessageSender.sendState(false);
         }
 
     }
     public void setPartnerSquareToGreen(){
         myPartnerState.setFill(Color.GREEN);
-
         guiMessageSender.sendOnConfirmation();
-
-
     }
 
     public void setPartnerSquareToRed(){
         myPartnerState.setFill(Color.RED);
-
         guiMessageSender.sendOffConfirmation();
-
     }
 
     public void exit() {

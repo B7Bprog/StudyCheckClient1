@@ -18,7 +18,7 @@ public class GuiMessageSender {
     }
 
 
-    private void sendMessage(String s) throws Exception {
+    protected void sendMessage(String s) throws Exception {
 
         byte buf[] = s.getBytes();
         InetAddress address = InetAddress.getByName(hostname);
@@ -92,25 +92,26 @@ public class GuiMessageSender {
 
     public void sendState(boolean state) {
         boolean connected = false;
-
+        int counter = 0;
         do {
             try {
                 if (state) {
                     sendMessage("Bela is ON");
-
-                    connected = true;
+                    counter++;
                 }
                 else{
                     sendMessage("Bela is OFF");
-                    connected = true;
+                    counter++;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } while (!connected);
+        } while (counter < 3);
 
     }
-
+    public void sendTotalTime(String time) throws Exception {
+        sendMessage("--------------------------" + "\n" + "Bela Total Study: " + "\n" + time + "\n" + "--------------------------");
+    }
     public void sendOnConfirmation() {
         boolean connected = false;
 
